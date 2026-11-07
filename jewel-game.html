@@ -136,12 +136,6 @@ function findMatches(){
     if (e - r >= 2) for (let k = r; k <= e; k++) set.add(grid[k][c]);
     r = e + 1;
   }
-  // 2x2 사각형
-  for (let r = 0; r < ROWS - 1; r++) for (let c = 0; c < COLS - 1; c++) {
-    const t = T(r, c);
-    if (t !== undefined && T(r, c + 1) === t && T(r + 1, c) === t && T(r + 1, c + 1) === t)
-      set.add(grid[r][c]).add(grid[r][c + 1]).add(grid[r + 1][c]).add(grid[r + 1][c + 1]);
-  }
   return [...set];
 }
 function swapData(a, b){ [grid[a.r][a.c], grid[b.r][b.c]] = [b, a]; [a.r, b.r] = [b.r, a.r]; [a.c, b.c] = [b.c, a.c]; }
@@ -167,8 +161,7 @@ function fillBoard(){
       let t;
       do t = rnd(); while (
         (c >= 2 && grid[r][c-1].t === t && grid[r][c-2].t === t) ||
-        (r >= 2 && grid[r-1][c].t === t && grid[r-2][c].t === t) ||
-        (r >= 1 && c >= 1 && grid[r-1][c].t === t && grid[r][c-1].t === t && grid[r-1][c-1].t === t));
+        (r >= 2 && grid[r-1][c].t === t && grid[r-2][c].t === t));
       grid[r][c] = { t, r, c };
     }
   } while (!findMove());
@@ -320,7 +313,7 @@ for (let i = 0; i < 14; i++) {
   document.body.appendChild(s);
 }
 $('card').innerHTML = `<h2>👑 보석 퍼즐</h2>
-  <p>이웃한 보석 두 개를 <b>바꿔서</b><br>같은 보석을 <b>3개 이상</b> 한 줄로 맞추거나<br><b>2×2 사각형</b>으로 모으세요!</p>
+  <p>이웃한 보석 두 개를 <b>바꿔서</b><br>같은 보석을 <b>3개 이상</b> 한 줄로 맞추세요!</p>
   <p style="font-size:13px;color:#777">스와이프하거나, 두 보석을 차례로 탭하세요.<br>연쇄 콤보는 점수 배수 · 힌트 -3초</p>
   <button onclick="newGame()">시작</button>`;
 $('overlay').classList.add('show');
