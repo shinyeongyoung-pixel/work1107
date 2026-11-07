@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>보석 퍼즐</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --light:#fff5fb; --dark:#fbe0f0;
+    --accent:#d63384; --pink:#c2185b; --purple:#8e4fc9;
+    --cell:min(calc((100vw - 24px) / 8), calc((100vh - 170px) / 12), 60px);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;font-family:"Jua",system-ui,"Malgun Gothic",sans-serif;user-select:none;overflow:hidden;touch-action:none}
+  body{
+    background:
+      radial-gradient(circle at 15% 20%, rgba(255,255,255,.7) 0 2px, transparent 3px) 0 0/90px 90px,
+      radial-gradient(circle at 70% 60%, rgba(255,255,255,.55) 0 1.5px, transparent 2.5px) 0 0/60px 60px,
+      radial-gradient(ellipse at top, #ffe1f0 0%, transparent 60%),
+      linear-gradient(160deg, #fbc2eb 0%, #e6b8f5 45%, #c9b6ff 100%);
+    background-attachment:fixed;
+  }
+  #app{display:flex;flex-direction:column;align-items:center;height:100%;position:relative}
+  .sparkle{position:fixed;color:#fff;pointer-events:none;text-shadow:0 0 6px #fff,0 0 12px #ffb6e1;animation:twinkle 2.4s ease-in-out infinite}
+  @keyframes twinkle{0%,100%{opacity:.2;transform:scale(.7)}50%{opacity:1;transform:scale(1.15)}}
+  h1{margin:12px 0 2px;font-family:"Jua",sans-serif;font-weight:400;font-size:42px;letter-spacing:2px;line-height:1.1;
+     background:linear-gradient(180deg,#ff9fd0 0%,#e8409a 55%,#9b4dca 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
+     filter:drop-shadow(1.5px 0 0 #fff) drop-shadow(-1.5px 0 0 #fff) drop-shadow(0 1.5px 0 #fff) drop-shadow(0 -1.5px 0 #fff) drop-shadow(0 4px 5px rgba(150,40,120,.4))}
+  h1 .crown{-webkit-text-fill-color:initial;color:initial;font-size:30px;vertical-align:6px;filter:none}
+  header{width:calc(var(--cell)*8 + 12px);display:flex;align-items:center;justify-content:space-between;padding:4px 0 6px}
+  .best{color:var(--purple);font-size:20px;min-width:64px;text-shadow:0 1px 0 #fff}
+  .score{color:var(--accent);font-size:30px;text-shadow:0 2px 0 #fff}
+  .btns{display:flex;gap:6px}
+  .btns button{font-family:inherit;border:2px solid #fff;border-radius:20px;background:linear-gradient(#ffb3d9,#e57cc4);color:#fff;font-size:14px;padding:5px 12px;cursor:pointer;box-shadow:0 2px 6px rgba(180,60,140,.35)}
+  .btns button:active{transform:translateY(2px);box-shadow:none}
+  #timebar{width:calc(var(--cell)*8 + 12px);height:8px;background:rgba(255,255,255,.6);border-radius:4px;overflow:hidden;margin-bottom:6px}
+  #timefill{height:100%;width:100%;background:linear-gradient(90deg,#ff7eb9,#c77dff);transition:width .2s linear}
+  #wrap{position:relative;padding:6px;background:rgba(255,255,255,.85);border-radius:16px;border:3px solid #fff;box-shadow:0 0 0 3px #f7a8d4,0 8px 24px rgba(160,60,160,.3)}
+  #board{border-radius:10px}
+  #board{position:relative;overflow:hidden;width:calc(var(--cell)*8);height:calc(var(--cell)*12);
+    background:repeating-conic-gradient(var(--light) 0 25%, var(--dark) 0 50%) 0 0/calc(var(--cell)*2) calc(var(--cell)*2)}
+  .g{position:absolute;left:0;top:0;width:var(--cell);height:var(--cell);display:flex;align-items:center;justify-content:center;
+     transition:transform .2s ease-in;cursor:pointer}
+  .g svg{width:80%;height:80%;filter:drop-shadow(0 1px 1px rgba(0,0,0,.25));pointer-events:none;transition:transform .15s}
+  .g.sel svg{transform:scale(1.18)}
+  .g.sel{background:rgba(255,200,0,.35);border-radius:8px}
+  .g.hint svg{animation:hint .5s ease-in-out infinite alternate}
+  @keyframes hint{to{transform:scale(1.2) rotate(8deg)}}
+  .g.pop svg{animation:pop .25s ease-in forwards}
+  @keyframes pop{40%{transform:scale(1.35)}100%{transform:scale(0) rotate(90deg);opacity:0}}
+  .float{position:absolute;color:var(--accent);font-weight:900;font-size:22px;text-shadow:0 0 3px #fff,0 0 3px #fff;pointer-events:none;animation:up .9s forwards;z-index:5}
+  @keyframes up{to{transform:translateY(-40px);opacity:0}}
+  #overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:9}
+  #overlay.show{display:flex}
+  .card{background:#fff;border-radius:16px;padding:24px 28px;text-align:center;min-width:240px;max-width:88vw}
+  .card{border:3px solid #f7a8d4;box-shadow:0 10px 30px rgba(160,60,160,.35)}
+  .card h2{margin:0 0 8px;color:var(--accent);font-weight:400;font-size:28px}
+  .card p{margin:6px 0;color:#6b4a66;line-height:1.5}
+  .card button{font-family:inherit;margin-top:12px;border:2px solid #fff;border-radius:24px;background:linear-gradient(#ff9ccf,#d65db1);color:#fff;font-size:19px;padding:10px 30px;cursor:pointer;box-shadow:0 3px 8px rgba(180,60,140,.4)}
+</style>
+</head>
+<body>
+<div id="app">
+  <h1><span class="crown">👑</span> 보석 퍼즐 <span class="crown">💎</span></h1>
+  <header>
+    <div class="best">H <span id="best">0</span></div>
+    <div class="score" id="score">0</div>
+    <div class="btns">
+      <button id="hintBtn">힌트</button>
+      <button id="newBtn">새 게임</button>
+    </div>
+  </header>
+  <div id="timebar"><div id="timefill"></div></div>
+  <div id="wrap"><div id="board"></div></div>
+</div>
+<div id="overlay"><div class="card" id="card"></div></div>
+
+<script>
+const COLS = 8, ROWS = 12, TYPES = 7, MAX_TIME = 90;
+
+const shine = '<path d="M12 10 L18 8 L14 16 Z" fill="#fff" opacity=".55"/>';
+const GEMS = [
+  `<polygon points="20,3 36,20 20,37 4,20" fill="#e53950"/><polygon points="20,3 28,20 20,37 12,20" fill="#ff6b7e" opacity=".7"/><polygon points="20,3 36,20 4,20" fill="#fff" opacity=".18"/>`,
+  `<ellipse cx="20" cy="20" rx="12" ry="16" fill="#f06aa8"/><ellipse cx="20" cy="20" rx="6" ry="11" fill="#ff9ccb" opacity=".8"/>${shine}`,
+  `<polygon points="20,3 35,11.5 35,28.5 20,37 5,28.5 5,11.5" fill="#2f6fd6"/><polygon points="20,10 28,15 28,25 20,30 12,25 12,15" fill="#5b9cff"/>${shine}`,
+  `<polygon points="14,3 26,3 32,10 32,30 26,37 14,37 8,30 8,10" fill="#1f9d57"/><rect x="14" y="9" width="12" height="22" fill="#44c97f"/>${shine}`,
+  `<rect x="7" y="5" width="26" height="30" rx="4" fill="#f59a12"/><rect x="12" y="10" width="16" height="20" rx="2" fill="#ffc451"/>${shine}`,
+  `<polygon points="4,14 11,5 29,5 36,14 20,36" fill="#3fbbe8"/><polygon points="4,14 36,14 20,36" fill="#7fd9fb"/><polygon points="11,5 29,5 24,14 16,14" fill="#fff" opacity=".5"/>`,
+  `<path d="M20 3 C27 14 32 20 32 26 A12 12 0 0 1 8 26 C8 20 13 14 20 3 Z" fill="#c9ced6"/><path d="M20 10 C24 17 27 21 27 26 A7 7 0 0 1 13 26 C13 21 16 17 20 10 Z" fill="#f4f6f9"/>`,
+  `<path d="M20 35 L5 19 A8 8 0 0 1 20 9 A8 8 0 0 1 35 19 Z" fill="#53b52e"/><path d="M20 28 L11 18 A4.5 4.5 0 0 1 20 13 A4.5 4.5 0 0 1 29 18 Z" fill="#8ee05d"/>`,
+  `<polygon points="20,3 37,15 30,36 10,36 3,15" fill="#f2c200"/><polygon points="20,11 29,17 25,29 15,29 11,17" fill="#ffe36a"/>${shine}`,
+];
+
+const $ = id => document.getElementById(id);
+const boardEl = $('board');
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+let grid = [], score = 0, timeLeft = MAX_TIME, timer, over = true, busy = false, sel = null;
+
+function load(k, d){ try{ return JSON.parse(localStorage.getItem(k)) ?? d }catch{ return d } }
+function save(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)) }catch{} }
+let best = load('jewel-best', 0);
+$('best').textContent = best;
+
+const S = () => boardEl.clientWidth / COLS;
+const rnd = () => Math.random() * TYPES | 0;
+
+function makeGem(t, r, c, fromRow = r){
+  const el = document.createElement('div');
+  el.className = 'g';
+  el.innerHTML = `<svg viewBox="0 0 40 40">${GEMS[t]}</svg>`;
+  const g = { t, el, r, c };
+  el.style.transition = 'none';
+  setPos(g, fromRow, c);
+  boardEl.appendChild(el);
+  void el.offsetWidth;
+  el.style.transition = '';
+  return g;
+}
+function setPos(g, r = g.r, c = g.c){ g.el.style.transform = `translate(${c * S()}px, ${r * S()}px)`; }
+function place(g, r, c){ g.r = r; g.c = c; grid[r][c] = g; setPos(g); }
+window.addEventListener('resize', () => grid.flat().forEach(g => g && setPos(g)));
+
+// ---- 매치 판정 ----
+const T = (r, c) => grid[r]?.[c]?.t;
+function findMatches(){
+  const set = new Set();
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS;) {
+    let e = c; while (e + 1 < COLS && T(r, e + 1) === T(r, c)) e++;
+    if (e - c >= 2) for (let k = c; k <= e; k++) set.add(grid[r][k]);
+    c = e + 1;
+  }
+  for (let c = 0; c < COLS; c++) for (let r = 0; r < ROWS;) {
+    let e = r; while (e + 1 < ROWS && T(e + 1, c) === T(r, c)) e++;
+    if (e - r >= 2) for (let k = r; k <= e; k++) set.add(grid[k][c]);
+    r = e + 1;
+  }
+  return [...set];
+}
+function swapData(a, b){ [grid[a.r][a.c], grid[b.r][b.c]] = [b, a]; [a.r, b.r] = [b.r, a.r]; [a.c, b.c] = [b.c, a.c]; }
+function findMove(){
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++)
+    for (const [dr, dc] of [[0,1],[1,0]]) {
+      const a = grid[r][c], b = grid[r + dr]?.[c + dc];
+      if (!b) continue;
+      swapData(a, b);
+      const ok = findMatches().length > 0;
+      swapData(a, b);
+      if (ok) return [a, b];
+    }
+  return null;
+}
+
+// ---- 판 생성: 처음부터 꽉 채움 (시작 시 3연속 없음 + 움직일 수 있는 수 존재) ----
+function fillBoard(){
+  boardEl.innerHTML = '';
+  do {
+    grid = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+      let t;
+      do t = rnd(); while (
+        (c >= 2 && grid[r][c-1].t === t && grid[r][c-2].t === t) ||
+        (r >= 2 && grid[r-1][c].t === t && grid[r-2][c].t === t));
+      grid[r][c] = { t, r, c };
+    }
+  } while (!findMove());
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+    const d = grid[r][c];
+    grid[r][c] = makeGem(d.t, r, c, r - ROWS);
+    setTimeout(() => setPos(grid[r][c]), 20 + c * 15);
+  }
+}
+
+function newGame(){
+  $('overlay').classList.remove('show');
+  score = 0; timeLeft = MAX_TIME; over = false; busy = false; sel = null;
+  fillBoard(); hud();
+  clearInterval(timer);
+  timer = setInterval(() => {
+    if (over) return;
+    timeLeft -= 0.2;
+    if (timeLeft <= 0) { timeLeft = 0; if (!busy) end('시간 종료!'); }
+    hud();
+  }, 200);
+}
+function hud(){
+  $('score').textContent = score;
+  $('timefill').style.width = (timeLeft / MAX_TIME * 100) + '%';
+}
+
+// ---- 입력: 탭-탭 또는 스와이프 ----
+let down = null;
+boardEl.addEventListener('pointerdown', e => {
+  if (over || busy) return;
+  const rect = boardEl.getBoundingClientRect();
+  const c = Math.floor((e.clientX - rect.left) / S()), r = Math.floor((e.clientY - rect.top) / S());
+  if (!grid[r]?.[c]) return;
+  down = { r, c, x: e.clientX, y: e.clientY };
+});
+window.addEventListener('pointermove', e => {
+  if (!down) return;
+  const dx = e.clientX - down.x, dy = e.clientY - down.y;
+  if (Math.max(Math.abs(dx), Math.abs(dy)) < S() * 0.4) return;
+  const [dr, dc] = Math.abs(dx) > Math.abs(dy) ? [0, Math.sign(dx)] : [Math.sign(dy), 0];
+  const a = grid[down.r][down.c], b = grid[down.r + dr]?.[down.c + dc];
+  down = null;
+  clearSel();
+  if (b) trySwap(a, b);
+});
+window.addEventListener('pointerup', () => {
+  if (!down) return;
+  const g = grid[down.r][down.c];
+  down = null;
+  if (!sel) { sel = g; g.el.classList.add('sel'); return; }
+  if (sel === g) { clearSel(); return; }
+  if (Math.abs(sel.r - g.r) + Math.abs(sel.c - g.c) === 1) { const a = sel; clearSel(); trySwap(a, g); }
+  else { clearSel(); sel = g; g.el.classList.add('sel'); }
+});
+function clearSel(){ sel?.el.classList.remove('sel'); sel = null; }
+
+async function trySwap(a, b){
+  busy = true;
+  document.querySelectorAll('.hint').forEach(e => e.classList.remove('hint'));
+  swapData(a, b); setPos(a); setPos(b);
+  await sleep(200);
+  if (!findMatches().length) {
+    swapData(a, b); setPos(a); setPos(b);
+    await sleep(200);
+    busy = false;
+    return;
+  }
+  await resolve();
+  busy = false;
+  if (timeLeft <= 0) return end('시간 종료!');
+  if (!findMove()) await reshuffle();
+}
+
+async function resolve(){
+  let combo = 1, m;
+  while ((m = findMatches()).length) {
+    m.forEach(g => g.el.classList.add('pop'));
+    const gained = m.length * 10 * combo;
+    score += gained;
+    timeLeft = Math.min(MAX_TIME, timeLeft + m.length * 0.3);
+    const cx = m.reduce((s, g) => s + g.c, 0) / m.length, cy = m.reduce((s, g) => s + g.r, 0) / m.length;
+    floatText(cx, cy, combo > 1 ? `+${gained} x${combo}` : `+${gained}`);
+    hud();
+    await sleep(250);
+    m.forEach(g => { g.el.remove(); grid[g.r][g.c] = null; });
+    // 중력 + 위에서 새 보석 채우기
+    for (let c = 0; c < COLS; c++) {
+      let w = ROWS - 1;
+      for (let r = ROWS - 1; r >= 0; r--) if (grid[r][c]) { const g = grid[r][c]; grid[r][c] = null; place(g, w--, c); }
+      const need = w + 1;
+      for (let r = w; r >= 0; r--) { const g = makeGem(rnd(), r, c, r - need); grid[r][c] = g; }
+    }
+    await sleep(20);
+    grid.flat().forEach(g => setPos(g));
+    await sleep(260);
+    combo++;
+  }
+}
+
+async function reshuffle(){
+  busy = true;
+  floatText(COLS / 2 - 1.5, ROWS / 2, '섞는 중!', '#8e4fc9');
+  const gems = grid.flat();
+  do {
+    const ts = gems.map(g => g.t).sort(() => Math.random() - .5);
+    gems.forEach((g, i) => g.t = ts[i]);
+  } while (findMatches().length || !findMove());
+  gems.forEach(g => g.el.innerHTML = `<svg viewBox="0 0 40 40">${GEMS[g.t]}</svg>`);
+  await sleep(400);
+  busy = false;
+}
+
+function floatText(c, r, txt, color){
+  const d = document.createElement('div');
+  d.className = 'float'; d.textContent = txt;
+  if (color) d.style.color = color;
+  d.style.left = (c * S() + 4) + 'px'; d.style.top = (r * S()) + 'px';
+  $('wrap').appendChild(d);
+  setTimeout(() => d.remove(), 900);
+}
+
+function end(title){
+  over = true;
+  clearInterval(timer);
+  const record = score > best;
+  if (record) { best = score; save('jewel-best', best); $('best').textContent = best; }
+  $('card').innerHTML = `<h2>${title}</h2>
+    <p>점수 <b style="color:var(--accent);font-size:22px">${score}</b>${record ? '<br>🏆 최고 기록!' : ''}</p>
+    <button onclick="newGame()">다시 하기</button>`;
+  $('overlay').classList.add('show');
+}
+
+$('hintBtn').onclick = () => {
+  if (over || busy) return;
+  const m = findMove();
+  if (m) { m.forEach(g => g.el.classList.add('hint')); timeLeft = Math.max(0, timeLeft - 3); hud(); }
+};
+$('newBtn').onclick = newGame;
+
+for (let i = 0; i < 14; i++) {
+  const s = document.createElement('div');
+  s.className = 'sparkle';
+  s.textContent = i % 3 ? '✦' : '✧';
+  s.style.left = Math.random() * 100 + 'vw';
+  s.style.top = Math.random() * 100 + 'vh';
+  s.style.fontSize = 8 + Math.random() * 14 + 'px';
+  s.style.animationDelay = Math.random() * 2.4 + 's';
+  document.body.appendChild(s);
+}
+$('card').innerHTML = `<h2>👑 보석 퍼즐</h2>
+  <p>이웃한 보석 두 개를 <b>바꿔서</b><br>같은 보석을 <b>3개 이상</b> 한 줄로 맞추세요!</p>
+  <p style="font-size:13px;color:#777">스와이프하거나, 두 보석을 차례로 탭하세요.<br>연쇄 콤보는 점수 배수 · 힌트 -3초</p>
+  <button onclick="newGame()">시작</button>`;
+$('overlay').classList.add('show');
+</script>
+</body>
+</html>
