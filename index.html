@@ -6,6 +6,10 @@
 <title>동물 퍼즐</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+<!-- React 18 (UMD) + Babel: 빌드 없이 브라우저에서 JSX 실행 -->
+<script crossorigin src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/@babel/standalone@7.26.2/babel.min.js"></script>
 <style>
   :root{
     --light:#fffbea; --dark:#eef7d6;
@@ -16,9 +20,10 @@
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;height:100%;font-family:"Jua",system-ui,"Malgun Gothic",sans-serif;user-select:none;overflow:hidden;touch-action:none}
   body{background:#bfe9ff}
+  #root{height:100%}
 
   /* ---------- 마을 배경 ---------- */
-  #village{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;
+  .village{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;
     background:linear-gradient(#9fdcff 0%, #cdf0ff 35%, #e9f9ff 46%)}
   .sun{position:absolute;right:7vw;top:5vh;width:70px;height:70px;border-radius:50%;
     background:radial-gradient(circle,#fff6b0 0 45%,#ffd84d 46% 70%,transparent 71%);
@@ -33,14 +38,13 @@
     background:
       radial-gradient(circle at 20% 30%, rgba(255,255,255,.18) 0 3px, transparent 4px) 0 0/48px 48px,
       linear-gradient(#9bd870, #7fc65a)}
-  .road{position:absolute;left:-5vw;right:-5vw;top:66vh;height:9vh;background:#f2d9a4;border-radius:50%;
-    box-shadow:inset 0 -4px 0 #e2c287}
+  .road{position:absolute;left:-5vw;right:-5vw;top:66vh;height:9vh;background:#f2d9a4;border-radius:50%;box-shadow:inset 0 -4px 0 #e2c287}
   .pond{position:absolute;left:3vw;top:80vh;width:26vw;max-width:260px;height:12vh;border-radius:50%;
     background:radial-gradient(ellipse at 40% 35%,#bdeeff,#5cc3ee 70%);box-shadow:0 0 0 5px #c9e9a8}
   .prop{position:absolute;font-family:var(--emoji);line-height:1;transform:translate(-50%,-100%)}
   .bob{display:inline-block;animation:bob 1.6s ease-in-out infinite}
   @keyframes bob{50%{transform:translateY(-3px)}}
-  .walker{position:absolute;font-family:var(--emoji);line-height:1;will-change:left}
+  .walker{position:absolute;font-family:var(--emoji);line-height:1}
   .walker .body{display:inline-block;animation:hop .45s ease-in-out infinite}
   .walker.rest .body{animation:none}
   @keyframes hop{50%{transform:translateY(-4px)}}
@@ -49,26 +53,26 @@
   @keyframes bubble{0%{opacity:0;transform:translate(-50%,4px)}15%,80%{opacity:1;transform:translate(-50%,0)}100%{opacity:0}}
 
   /* ---------- 게임 UI ---------- */
-  #app{display:flex;flex-direction:column;align-items:center;height:100%;position:relative;z-index:1}
+  .app{display:flex;flex-direction:column;align-items:center;height:100%;position:relative;z-index:1}
   h1{margin:10px 0 2px;font-weight:400;font-size:44px;letter-spacing:3px;line-height:1.1;
      background:linear-gradient(180deg,#ffe07a 0%,#ffa53d 55%,#f06a1a 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
      filter:drop-shadow(2px 0 0 #fff) drop-shadow(-2px 0 0 #fff) drop-shadow(0 2px 0 #fff) drop-shadow(0 -2px 0 #fff) drop-shadow(0 4px 0 #8d5a2b)}
   h1 .paw{-webkit-text-fill-color:initial;color:initial;font-family:var(--emoji);font-size:30px;vertical-align:6px;display:inline-block;animation:bob 1.2s ease-in-out infinite}
   h1 .paw.r{animation-delay:.6s}
-  header{width:calc(var(--cell)*8 + 16px);display:flex;align-items:center;justify-content:space-between;padding:4px 0 6px}
+  .hud{width:calc(var(--cell)*8 + 16px);display:flex;align-items:center;justify-content:space-between;padding:4px 0 6px}
   .best,.score{text-shadow:2px 0 #fff,-2px 0 #fff,0 2px #fff,0 -2px #fff}
-  .best{color:var(--brown);font-size:20px;min-width:64px}
-  .score{color:var(--accent);font-size:30px}
-  .btns{display:flex;gap:5px}
-  .btns button{font-family:inherit;border:2px solid #fff;border-radius:20px;background:linear-gradient(#9be27a,#5cb338);color:#fff;font-size:14px;
+  .best{color:var(--brown);font-size:20px;min-width:56px;white-space:nowrap}
+  .score{color:var(--accent);font-size:30px;padding:0 6px}
+  .btns{display:flex;gap:5px;flex-shrink:0}
+  .btns button{white-space:nowrap;font-family:inherit;border:2px solid #fff;border-radius:20px;background:linear-gradient(#9be27a,#5cb338);color:#fff;font-size:14px;
     padding:5px 11px;cursor:pointer;box-shadow:0 2px 0 #3f8a24,0 3px 6px rgba(0,0,0,.2);text-shadow:0 1px 0 #3f8a24}
-  .btns button#musicBtn{font-family:var(--emoji);padding:4px 9px;background:linear-gradient(#ffd27a,#ffaa33);box-shadow:0 2px 0 #c77a12,0 3px 6px rgba(0,0,0,.2)}
+  .btns button.music{font-family:var(--emoji);padding:4px 9px;background:linear-gradient(#ffd27a,#ffaa33);box-shadow:0 2px 0 #c77a12,0 3px 6px rgba(0,0,0,.2)}
   .btns button:active{transform:translateY(2px);box-shadow:none}
-  #timebar{width:calc(var(--cell)*8 + 16px);height:9px;background:rgba(255,255,255,.75);border-radius:5px;overflow:hidden;margin-bottom:6px;border:2px solid #fff}
-  #timefill{height:100%;width:100%;background:linear-gradient(90deg,#7ed957,#ffd166);transition:width .2s linear}
-  #wrap{position:relative;padding:6px;background:#fff8e6;border-radius:16px;border:4px solid var(--wood);
+  .timebar{width:calc(var(--cell)*8 + 16px);height:9px;background:rgba(255,255,255,.75);border-radius:5px;overflow:hidden;margin-bottom:6px;border:2px solid #fff}
+  .timefill{height:100%;background:linear-gradient(90deg,#7ed957,#ffd166);transition:width .2s linear}
+  .wrap{position:relative;padding:6px;background:#fff8e6;border-radius:16px;border:4px solid var(--wood);
     box-shadow:0 0 0 3px var(--wood-dark),0 10px 24px rgba(60,40,10,.35)}
-  #board{position:relative;overflow:hidden;border-radius:10px;width:calc(var(--cell)*8);height:calc(var(--cell)*12);
+  .board{position:relative;overflow:hidden;border-radius:10px;width:calc(var(--cell)*8);height:calc(var(--cell)*12);
     background:repeating-conic-gradient(var(--light) 0 25%, var(--dark) 0 50%) 0 0/calc(var(--cell)*2) calc(var(--cell)*2)}
   .g{position:absolute;left:0;top:0;width:var(--cell);height:var(--cell);display:flex;align-items:center;justify-content:center;
      transition:transform .2s ease-in;cursor:pointer}
@@ -81,50 +85,32 @@
   @keyframes hint{to{transform:scale(1.2) rotate(10deg)}}
   .g.pop .face{animation:pop .25s ease-in forwards}
   @keyframes pop{40%{transform:scale(1.35)}100%{transform:scale(0) rotate(90deg);opacity:0}}
-  .float{position:absolute;color:var(--accent);font-size:22px;text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 3px #fff;pointer-events:none;animation:up .9s forwards;z-index:5}
+  .float{position:absolute;color:var(--accent);font-size:22px;text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 3px #fff;pointer-events:none;animation:up .9s forwards;z-index:5;white-space:nowrap}
   @keyframes up{to{transform:translateY(-40px);opacity:0}}
 
-  #overlay{position:fixed;inset:0;background:rgba(40,30,10,.4);display:none;align-items:center;justify-content:center;z-index:9}
-  #overlay.show{display:flex}
+  .overlay{position:fixed;inset:0;background:rgba(40,30,10,.4);display:flex;align-items:center;justify-content:center;z-index:9}
   .card{background:#fffaf0;border-radius:18px;padding:22px 26px;text-align:center;min-width:240px;max-width:88vw;
     border:4px solid var(--wood);box-shadow:0 0 0 3px var(--wood-dark),0 10px 30px rgba(0,0,0,.35)}
   .card h2{margin:0 0 8px;color:#f06a1a;font-weight:400;font-size:30px}
   .card p{margin:6px 0;color:#6b4a2a;line-height:1.5}
   .card .faces{font-family:var(--emoji);font-size:26px;letter-spacing:2px;margin:4px 0 8px}
+  .card .small{font-size:13px;color:#8a7055}
   .card button{font-family:inherit;margin-top:12px;border:2px solid #fff;border-radius:24px;background:linear-gradient(#ffc14d,#ff8a1f);color:#fff;font-size:20px;
     padding:10px 32px;cursor:pointer;box-shadow:0 3px 0 #c9610a,0 5px 10px rgba(0,0,0,.25);text-shadow:0 1px 0 #c9610a}
+  .loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font-size:22px;color:#7a4b20}
 </style>
 </head>
 <body>
-<div id="village">
-  <div class="sun"></div>
-  <div class="hill h1"></div>
-  <div class="hill h2"></div>
-  <div class="ground"></div>
-  <div class="road"></div>
-  <div class="pond"></div>
-</div>
+<div id="root"><div class="loading">🐾 불러오는 중...</div></div>
 
-<div id="app">
-  <h1><span class="paw">🐾</span> 동물 퍼즐 <span class="paw r">🐾</span></h1>
-  <header>
-    <div class="best">H <span id="best">0</span></div>
-    <div class="score" id="score">0</div>
-    <div class="btns">
-      <button id="musicBtn" title="음악 켜기/끄기">🔊</button>
-      <button id="hintBtn">힌트</button>
-      <button id="newBtn">새 게임</button>
-    </div>
-  </header>
-  <div id="timebar"><div id="timefill"></div></div>
-  <div id="wrap"><div id="board"></div></div>
-</div>
-<div id="overlay"><div class="card" id="card"></div></div>
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useRef, useReducer, useCallback } = React;
 
-<script>
+/* =========================================================
+   상수 · 데이터
+   ========================================================= */
 const COLS = 8, ROWS = 12, MAX_TIME = 90;
 
-// 퍼즐 조각: 동물 얼굴 이모지 + 구분하기 쉬운 파스텔 배경
 const ANIMALS = [
   { e: '🐶', bg: '#ffe0b2' },
   { e: '🐱', bg: '#fff59d' },
@@ -135,395 +121,551 @@ const ANIMALS = [
   { e: '🐷', bg: '#ffc4d6' },
 ];
 const TYPES = ANIMALS.length;
-const faceHTML = t => `<div class="face" style="background:${ANIMALS[t].bg}">${ANIMALS[t].e}</div>`;
 
-const $ = id => document.getElementById(id);
-const boardEl = $('board');
+const VILLAGE = {
+  clouds: [[8, 34, 60], [22, 46, 90], [12, 28, 120], [4, 40, 75]],          // [top(vh), size(px), 이동시간(s)]
+  props: [                                                                  // [이모지, x(vw), y(vh), size(px), 살랑살랑?]
+    ['🏡', 9, 52, 64], ['🐻', 17, 53, 30, true],
+    ['🏠', 90, 50, 58], ['🐼', 82, 51, 28, true],
+    ['🏘️', 70, 46, 44], ['🐨', 63, 47, 22, true],
+    ['🏪', 30, 46, 40], ['🦊', 36, 47, 22, true],
+    ...[[3,47,46],[24,45,34],[47,44,30],[57,45,36],[78,44,32],[97,48,50],[1,64,54],[98,66,58],[44,98,44],[60,99,48]]
+      .map(([x, y, s], i) => [i % 3 ? '🌳' : '🌲', x, y, s]),
+    ['🍎', 97.5, 42, 14],
+    ...[[14,60],[19,62],[33,58],[52,60],[66,59],[73,62],[88,60],[93,63],[8,92],[27,96],[36,90],[71,92],[83,95],[90,89],[54,93]]
+      .map(([x, y], i) => [['🌷','🌼','🌸','🌻','🍀'][i % 5], x, y, 18]),
+    ['📮', 13, 57, 20], ['🍄', 40, 62, 18], ['⛲', 50, 61, 34], ['🪑', 76, 58, 22],
+    ['🦆', 10, 87, 24, true], ['🐸', 20, 88, 20, true], ['🎣', 28, 82, 20], ['🐢', 30, 83, 18],
+  ],
+  walkers: ['🐕','🐈','🐇','🐿️','🐓','🐑','🦔','🐖','🐄','🐐','🦝','🐥'],
+  says: ['♪','💕','👋','✨','🎵','😊','🍎','🌸'],
+};
+
+/* =========================================================
+   유틸
+   ========================================================= */
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-let grid = [], score = 0, timeLeft = MAX_TIME, timer, over = true, busy = false, sel = null, started = false;
-
-function load(k, d){ try{ return JSON.parse(localStorage.getItem(k)) ?? d }catch{ return d } }
-function save(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)) }catch{} }
-let best = load('animal-best', 0);
-$('best').textContent = best;
+const nextFrame = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+function load(k, d){ try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } }
+function save(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
 
 /* =========================================================
-   사운드: Web Audio로 직접 만드는 귀여운 배경음악 + 효과음
+   퍼즐 로직 (순수 함수 · 판 = 조각 객체의 2차원 배열)
+   조각: { id, t(종류), r, c(논리 위치), y(화면상 행), instant(애니메이션 없이 배치), pop, sel, hint }
    ========================================================= */
-let actx = null, master = null, musicOn = load('animal-music', true), schedTimer = null, nextT = 0, step = 0;
-const EIGHTH = 0.19;
-const NI = { C:0, D:2, E:4, F:5, G:7, A:9, B:11 };
-const hz = n => { const m = /^([A-G])(#?)(\d)$/.exec(n); return 440 * Math.pow(2, (NI[m[1]] + (m[2] ? 1 : 0) + (m[3] - 4) * 12 - 9) / 12); };
-// 8분음표 32칸 = 4마디 (C - F - G - C) 통통 튀는 멜로디
-const MEL = [
-  'E5','G5','C6','G5','E5','G5','A5','G5',
-  'F5','A5','C6','A5','G5','F5','E5','D5',
-  'D5','G5','B5','G5','F5','D5','G5','B5',
-  'C6',null,'G5','E5','C5',null,'G5',null,
-  'E5','E5','G5',null,'A5','G5','E5','C5',
-  'F5','F5','A5',null,'C6','A5','F5',null,
-  'G5','B5','D6','B5','A5','G5','F5','D5',
-  'E5','G5','C6',null,'C6',null,null,null,
-];
-const BASS = ['C3','G3','E3','G3','F3','C4','A3','C4','G2','D3','B2','D3','C3','G3','C3',null];
-const BELL = { 0:'C7', 16:'G6', 32:'E7', 48:'C7' };
+let pieceId = 0;
+const randType = () => Math.random() * TYPES | 0;
+const makePiece = (t, r, c, y = r) => ({ id: ++pieceId, t, r, c, y, instant: false, pop: false, sel: false, hint: false });
+const typeAt = (g, r, c) => g[r]?.[c]?.t;
 
-function audio(){
-  if (!actx) {
-    const AC = window.AudioContext || window.webkitAudioContext;
-    if (!AC) return null;
-    actx = new AC();
-    master = actx.createGain(); master.gain.value = 0.55; master.connect(actx.destination);
-  }
-  if (actx.state === 'suspended') actx.resume();
-  return actx;
-}
-function tone(f, t, dur, type = 'triangle', vol = .08, slide = 0){
-  const o = actx.createOscillator(), g = actx.createGain();
-  o.type = type; o.frequency.setValueAtTime(f, t);
-  if (slide) o.frequency.exponentialRampToValueAtTime(f * slide, t + dur);
-  g.gain.setValueAtTime(0.0001, t);
-  g.gain.linearRampToValueAtTime(vol, t + 0.012);
-  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-  o.connect(g).connect(master);
-  o.start(t); o.stop(t + dur + 0.03);
-}
-function scheduler(){
-  while (nextT < actx.currentTime + 0.35) {
-    const i = step % MEL.length;
-    if (MEL[i]) tone(hz(MEL[i]), nextT, 0.2, 'triangle', 0.09);
-    if (i % 2 === 0) { const b = BASS[(i / 2) % BASS.length]; if (b) tone(hz(b), nextT, 0.32, 'sine', 0.13); }
-    if (i % 4 === 2) tone(2400, nextT, 0.03, 'square', 0.012);           // 톡톡 리듬
-    if (BELL[i]) tone(hz(BELL[i]), nextT, 0.6, 'sine', 0.035);            // 반짝 종소리
-    nextT += EIGHTH; step++;
-  }
-}
-function startMusic(){
-  if (!musicOn || schedTimer || !audio()) return;
-  nextT = actx.currentTime + 0.1;
-  schedTimer = setInterval(scheduler, 60);
-}
-function stopMusic(){ clearInterval(schedTimer); schedTimer = null; }
-function sfx(kind, n = 1){
-  if (!musicOn || !audio()) return;
-  const t = actx.currentTime;
-  if (kind === 'pop') {          // 콤보가 높을수록 높은 음
-    const base = ['C6','E6','G6','C7'].map(hz), up = Math.pow(2, Math.min(n - 1, 6) * 2 / 12);
-    base.forEach((f, i) => tone(f * up, t + i * 0.045, 0.14, 'sine', 0.09));
-  } else if (kind === 'swap') tone(hz('A5'), t, 0.07, 'sine', 0.06, 1.3);
-  else if (kind === 'nope') { tone(hz('E4'), t, 0.12, 'square', 0.03, 0.8); tone(hz('C4'), t + 0.1, 0.16, 'square', 0.03, 0.8); }
-  else if (kind === 'end') ['G5','E5','C5','G4'].forEach((m, i) => tone(hz(m), t + i * 0.16, 0.3, 'triangle', 0.09));
-  else if (kind === 'record') ['C5','E5','G5','C6','E6','G6'].forEach((m, i) => tone(hz(m), t + i * 0.09, 0.3, 'triangle', 0.09));
-}
-function setMusic(on){
-  musicOn = on; save('animal-music', on);
-  $('musicBtn').textContent = on ? '🔊' : '🔇';
-  if (on && started) startMusic(); else stopMusic();
-}
-$('musicBtn').textContent = musicOn ? '🔊' : '🔇';
-$('musicBtn').onclick = () => setMusic(!musicOn);
-document.addEventListener('visibilitychange', () => {
-  if (document.hidden) stopMusic(); else if (started) startMusic();
-});
-
-/* =========================================================
-   퍼즐 로직
-   ========================================================= */
-const S = () => boardEl.clientWidth / COLS;
-const rnd = () => Math.random() * TYPES | 0;
-
-function makeGem(t, r, c, fromRow = r){
-  const el = document.createElement('div');
-  el.className = 'g';
-  el.innerHTML = faceHTML(t);
-  const g = { t, el, r, c };
-  el.style.transition = 'none';
-  setPos(g, fromRow, c);
-  boardEl.appendChild(el);
-  void el.offsetWidth;
-  el.style.transition = '';
-  return g;
-}
-function setPos(g, r = g.r, c = g.c){ g.el.style.transform = `translate(${c * S()}px, ${r * S()}px)`; }
-function place(g, r, c){ g.r = r; g.c = c; grid[r][c] = g; setPos(g); }
-window.addEventListener('resize', () => grid.flat().forEach(g => g && g.el && setPos(g)));
-
-const T = (r, c) => grid[r]?.[c]?.t;
-function findMatches(){
+function findMatches(g){
   const set = new Set();
-  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS;) {
-    let e = c; while (e + 1 < COLS && T(r, e + 1) === T(r, c)) e++;
-    if (e - c >= 2) for (let k = c; k <= e; k++) set.add(grid[r][k]);
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS;) {           // 가로 3+
+    let e = c; while (e + 1 < COLS && typeAt(g, r, e + 1) === typeAt(g, r, c)) e++;
+    if (e - c >= 2) for (let k = c; k <= e; k++) set.add(g[r][k]);
     c = e + 1;
   }
-  for (let c = 0; c < COLS; c++) for (let r = 0; r < ROWS;) {
-    let e = r; while (e + 1 < ROWS && T(e + 1, c) === T(r, c)) e++;
-    if (e - r >= 2) for (let k = r; k <= e; k++) set.add(grid[k][c]);
+  for (let c = 0; c < COLS; c++) for (let r = 0; r < ROWS;) {           // 세로 3+
+    let e = r; while (e + 1 < ROWS && typeAt(g, e + 1, c) === typeAt(g, r, c)) e++;
+    if (e - r >= 2) for (let k = r; k <= e; k++) set.add(g[k][c]);
     r = e + 1;
   }
-  // 2x2 사각형
-  for (let r = 0; r < ROWS - 1; r++) for (let c = 0; c < COLS - 1; c++) {
-    const t = T(r, c);
-    if (t !== undefined && T(r, c + 1) === t && T(r + 1, c) === t && T(r + 1, c + 1) === t)
-      set.add(grid[r][c]).add(grid[r][c + 1]).add(grid[r + 1][c]).add(grid[r + 1][c + 1]);
+  for (let r = 0; r < ROWS - 1; r++) for (let c = 0; c < COLS - 1; c++) {  // 2x2 사각형
+    const t = typeAt(g, r, c);
+    if (t !== undefined && typeAt(g, r, c + 1) === t && typeAt(g, r + 1, c) === t && typeAt(g, r + 1, c + 1) === t)
+      set.add(g[r][c]).add(g[r][c + 1]).add(g[r + 1][c]).add(g[r + 1][c + 1]);
   }
   return [...set];
 }
-function swapData(a, b){ [grid[a.r][a.c], grid[b.r][b.c]] = [b, a]; [a.r, b.r] = [b.r, a.r]; [a.c, b.c] = [b.c, a.c]; }
-function findMove(){
+
+function swapPieces(g, a, b){
+  g[a.r][a.c] = b; g[b.r][b.c] = a;
+  [a.r, b.r] = [b.r, a.r]; [a.c, b.c] = [b.c, a.c];
+  a.y = a.r; b.y = b.r;
+}
+
+function findMove(g){
   for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++)
-    for (const [dr, dc] of [[0,1],[1,0]]) {
-      const a = grid[r][c], b = grid[r + dr]?.[c + dc];
+    for (const [dr, dc] of [[0, 1], [1, 0]]) {
+      const a = g[r][c], b = g[r + dr]?.[c + dc];
       if (!b) continue;
-      swapData(a, b);
-      const ok = findMatches().length > 0;
-      swapData(a, b);
+      swapPieces(g, a, b);
+      const ok = findMatches(g).length > 0;
+      swapPieces(g, a, b);
       if (ok) return [a, b];
     }
   return null;
 }
 
-// 판 생성: 처음부터 꽉 채움 (시작 시 맞춰진 곳 없음 + 움직일 수 있는 수 존재)
-function fillBoard(){
-  boardEl.innerHTML = '';
+// 시작 판: 꽉 채움 + 맞춰진 곳 없음 + 둘 수 있는 수 존재. 위에서 떨어지며 등장.
+function createBoard(){
+  let g;
   do {
-    grid = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+    g = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
     for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
       let t;
-      do t = rnd(); while (
-        (c >= 2 && grid[r][c-1].t === t && grid[r][c-2].t === t) ||
-        (r >= 2 && grid[r-1][c].t === t && grid[r-2][c].t === t) ||
-        (r >= 1 && c >= 1 && grid[r-1][c].t === t && grid[r][c-1].t === t && grid[r-1][c-1].t === t));
-      grid[r][c] = { t, r, c };
+      do t = randType(); while (
+        (c >= 2 && g[r][c-1].t === t && g[r][c-2].t === t) ||
+        (r >= 2 && g[r-1][c].t === t && g[r-2][c].t === t) ||
+        (r >= 1 && c >= 1 && g[r-1][c].t === t && g[r][c-1].t === t && g[r-1][c-1].t === t));
+      g[r][c] = makePiece(t, r, c, r - ROWS);
+      g[r][c].instant = true;
     }
-  } while (!findMove());
-  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
-    const d = grid[r][c];
-    grid[r][c] = makeGem(d.t, r, c, r - ROWS);
-    setTimeout(() => setPos(grid[r][c]), 20 + c * 15);
-  }
+  } while (!findMove(g));
+  return g;
 }
 
-function newGame(){
-  $('overlay').classList.remove('show');
-  score = 0; timeLeft = MAX_TIME; over = false; busy = false; sel = null;
-  started = true; startMusic();
-  fillBoard(); hud();
-  clearInterval(timer);
-  timer = setInterval(() => {
-    if (over) return;
-    timeLeft -= 0.2;
-    if (timeLeft <= 0) { timeLeft = 0; if (!busy) end('시간 종료!'); }
-    hud();
-  }, 200);
-}
-function hud(){
-  $('score').textContent = score;
-  $('timefill').style.width = (timeLeft / MAX_TIME * 100) + '%';
-}
-
-// 입력: 탭-탭 또는 스와이프
-let down = null;
-boardEl.addEventListener('pointerdown', e => {
-  if (over || busy) return;
-  const rect = boardEl.getBoundingClientRect();
-  const c = Math.floor((e.clientX - rect.left) / S()), r = Math.floor((e.clientY - rect.top) / S());
-  if (!grid[r]?.[c]) return;
-  down = { r, c, x: e.clientX, y: e.clientY };
-});
-window.addEventListener('pointermove', e => {
-  if (!down) return;
-  const dx = e.clientX - down.x, dy = e.clientY - down.y;
-  if (Math.max(Math.abs(dx), Math.abs(dy)) < S() * 0.4) return;
-  const [dr, dc] = Math.abs(dx) > Math.abs(dy) ? [0, Math.sign(dx)] : [Math.sign(dy), 0];
-  const a = grid[down.r][down.c], b = grid[down.r + dr]?.[down.c + dc];
-  down = null;
-  clearSel();
-  if (b) trySwap(a, b);
-});
-window.addEventListener('pointerup', () => {
-  if (!down) return;
-  const g = grid[down.r][down.c];
-  down = null;
-  if (!sel) { sel = g; g.el.classList.add('sel'); return; }
-  if (sel === g) { clearSel(); return; }
-  if (Math.abs(sel.r - g.r) + Math.abs(sel.c - g.c) === 1) { const a = sel; clearSel(); trySwap(a, g); }
-  else { clearSel(); sel = g; g.el.classList.add('sel'); }
-});
-function clearSel(){ sel?.el.classList.remove('sel'); sel = null; }
-
-async function trySwap(a, b){
-  busy = true;
-  document.querySelectorAll('.hint').forEach(e => e.classList.remove('hint'));
-  sfx('swap');
-  swapData(a, b); setPos(a); setPos(b);
-  await sleep(200);
-  if (!findMatches().length) {
-    sfx('nope');
-    swapData(a, b); setPos(a); setPos(b);
-    await sleep(200);
-    busy = false;
-    return;
-  }
-  await resolve();
-  busy = false;
-  if (timeLeft <= 0) return end('시간 종료!');
-  if (!findMove()) await reshuffle();
-}
-
-async function resolve(){
-  let combo = 1, m;
-  while ((m = findMatches()).length) {
-    m.forEach(g => g.el.classList.add('pop'));
-    sfx('pop', combo);
-    const gained = m.length * 10 * combo;
-    score += gained;
-    timeLeft = Math.min(MAX_TIME, timeLeft + m.length * 0.3);
-    const cx = m.reduce((s, g) => s + g.c, 0) / m.length, cy = m.reduce((s, g) => s + g.r, 0) / m.length;
-    floatText(cx, cy, combo > 1 ? `+${gained} x${combo}` : `+${gained}`);
-    hud();
-    await sleep(250);
-    m.forEach(g => { g.el.remove(); grid[g.r][g.c] = null; });
-    for (let c = 0; c < COLS; c++) {
-      let w = ROWS - 1;
-      for (let r = ROWS - 1; r >= 0; r--) if (grid[r][c]) { const g = grid[r][c]; grid[r][c] = null; place(g, w--, c); }
-      const need = w + 1;
-      for (let r = w; r >= 0; r--) { const g = makeGem(rnd(), r, c, r - need); grid[r][c] = g; }
+// 빈칸 메우기: 아래로 떨어뜨리고 위에서 새 조각 생성. 새 조각 목록 반환.
+function applyGravity(g){
+  const spawned = [];
+  for (let c = 0; c < COLS; c++) {
+    let w = ROWS - 1;
+    for (let r = ROWS - 1; r >= 0; r--) {
+      const p = g[r][c];
+      if (p) { g[r][c] = null; g[w][c] = p; p.r = w; p.y = w; w--; }
     }
-    await sleep(20);
-    grid.flat().forEach(g => setPos(g));
-    await sleep(260);
-    combo++;
+    const need = w + 1;
+    for (let r = w; r >= 0; r--) {
+      const p = makePiece(randType(), r, c, r - need);
+      p.instant = true;
+      g[r][c] = p; spawned.push(p);
+    }
   }
+  return spawned;
 }
 
-async function reshuffle(){
-  busy = true;
-  floatText(COLS / 2 - 1.5, ROWS / 2, '섞는 중!', '#5cb338');
-  const gems = grid.flat();
+function shuffleBoard(g){
+  const all = g.flat();
   do {
-    const ts = gems.map(g => g.t).sort(() => Math.random() - .5);
-    gems.forEach((g, i) => g.t = ts[i]);
-  } while (findMatches().length || !findMove());
-  gems.forEach(g => g.el.innerHTML = faceHTML(g.t));
-  await sleep(400);
-  busy = false;
+    const ts = all.map(p => p.t).sort(() => Math.random() - .5);
+    all.forEach((p, i) => p.t = ts[i]);
+  } while (findMatches(g).length || !findMove(g));
 }
-
-function floatText(c, r, txt, color){
-  const d = document.createElement('div');
-  d.className = 'float'; d.textContent = txt;
-  if (color) d.style.color = color;
-  d.style.left = (c * S() + 4) + 'px'; d.style.top = (r * S()) + 'px';
-  $('wrap').appendChild(d);
-  setTimeout(() => d.remove(), 900);
-}
-
-function end(title){
-  over = true;
-  clearInterval(timer);
-  const record = score > best;
-  if (record) { best = score; save('animal-best', best); $('best').textContent = best; }
-  sfx(record ? 'record' : 'end');
-  $('card').innerHTML = `<h2>${title}</h2>
-    <p>점수 <b style="color:var(--accent);font-size:24px">${score}</b>${record ? '<br>🏆 최고 기록!' : ''}</p>
-    <button onclick="newGame()">다시 하기</button>`;
-  $('overlay').classList.add('show');
-}
-
-$('hintBtn').onclick = () => {
-  if (over || busy) return;
-  const m = findMove();
-  if (m) { m.forEach(g => g.el.classList.add('hint')); timeLeft = Math.max(0, timeLeft - 3); hud(); }
-};
-$('newBtn').onclick = newGame;
 
 /* =========================================================
-   동물 마을: 집, 나무, 꽃, 그리고 돌아다니는 주민들
+   사운드 (Web Audio 합성 — 음악 파일 없음)
    ========================================================= */
-const village = $('village');
-function prop(emoji, x, y, size, opts = {}){
-  const d = document.createElement('div');
-  d.className = 'prop';
-  d.style.left = x + 'vw'; d.style.top = y + 'vh'; d.style.fontSize = size + 'px';
-  d.style.zIndex = Math.round(y);
-  d.innerHTML = opts.bob ? `<span class="bob" style="animation-delay:${Math.random()}s">${emoji}</span>` : emoji;
-  if (opts.flip) d.style.transform += ' scaleX(-1)';
-  village.appendChild(d);
-  return d;
-}
-// 구름
-[[8, 34, 60], [22, 46, 90], [12, 28, 120], [4, 40, 75]].forEach(([top, size, dur], i) => {
-  const c = document.createElement('div');
-  c.className = 'cloud'; c.textContent = '☁️';
-  c.style.top = top + 'vh'; c.style.fontSize = size + 'px';
-  c.style.animationDuration = dur + 's'; c.style.animationDelay = -(dur * i / 4) + 's';
-  village.appendChild(c);
-});
-// 집과 집 앞 주민
-prop('🏡', 9, 52, 64); prop('🐻', 17, 53, 30, { bob: true });
-prop('🏠', 90, 50, 58); prop('🐼', 82, 51, 28, { bob: true });
-prop('🏘️', 70, 46, 44); prop('🐨', 63, 47, 22, { bob: true });
-prop('🏪', 30, 46, 40); prop('🦊', 36, 47, 22, { bob: true });
-// 나무
-[[3,47,46],[24,45,34],[47,44,30],[57,45,36],[78,44,32],[97,48,50],[1,64,54],[98,66,58],[44,98,44],[60,99,48]]
-  .forEach(([x, y, s], i) => prop(i % 3 ? '🌳' : '🌲', x, y, s));
-prop('🍎', 97.5, 42, 14);
-// 꽃밭과 소품
-[[14,60],[19,62],[33,58],[52,60],[66,59],[73,62],[88,60],[93,63],[8,92],[27,96],[36,90],[71,92],[83,95],[90,89],[54,93]]
-  .forEach(([x, y], i) => prop(['🌷','🌼','🌸','🌻','🍀'][i % 5], x, y, 18));
-prop('📮', 13, 57, 20); prop('🍄', 40, 62, 18); prop('⛲', 50, 61, 34); prop('🪑', 76, 58, 22);
-// 연못 친구들
-prop('🦆', 10, 87, 24, { bob: true }); prop('🐸', 20, 88, 20, { bob: true }); prop('🎣', 28, 82, 20);
-prop('🐢', 30, 83, 18);
+const Sound = (() => {
+  let ctx = null, master = null, timer = null, nextT = 0, step = 0, enabled = true;
+  const EIGHTH = 0.19;
+  const NI = { C:0, D:2, E:4, F:5, G:7, A:9, B:11 };
+  const hz = n => { const m = /^([A-G])(#?)(\d)$/.exec(n); return 440 * Math.pow(2, (NI[m[1]] + (m[2] ? 1 : 0) + (m[3] - 4) * 12 - 9) / 12); };
+  const MEL = [
+    'E5','G5','C6','G5','E5','G5','A5','G5',  'F5','A5','C6','A5','G5','F5','E5','D5',
+    'D5','G5','B5','G5','F5','D5','G5','B5',  'C6',null,'G5','E5','C5',null,'G5',null,
+    'E5','E5','G5',null,'A5','G5','E5','C5',  'F5','F5','A5',null,'C6','A5','F5',null,
+    'G5','B5','D6','B5','A5','G5','F5','D5',  'E5','G5','C6',null,'C6',null,null,null,
+  ];
+  const BASS = ['C3','G3','E3','G3','F3','C4','A3','C4','G2','D3','B2','D3','C3','G3','C3',null];
+  const BELL = { 0:'C7', 16:'G6', 32:'E7', 48:'C7' };
 
-// 길을 산책하는 주민들
-const WALKERS = ['🐕','🐈','🐇','🐿️','🐓','🐑','🦔','🐖','🐄','🐐','🦝','🐥'];
-const SAYS = ['♪','💕','👋','✨','🎵','😊','🍎','🌸'];
-const walkers = WALKERS.map(e => {
-  const el = document.createElement('div');
-  el.className = 'walker';
-  el.innerHTML = `<span class="body">${e}</span>`;
-  village.appendChild(el);
-  const y = 60 + Math.random() * 36;
-  return { el, x: Math.random() * 100, y, v: (0.012 + Math.random() * 0.02) * (Math.random() < .5 ? -1 : 1), rest: 0 };
-});
-let lastT = performance.now();
-function walk(now){
-  const dt = Math.min(50, now - lastT); lastT = now;
-  for (const w of walkers) {
-    if (w.rest > 0) {
-      w.rest -= dt;
-      if (w.rest <= 0) { w.el.classList.remove('rest'); if (Math.random() < .4) w.v = -w.v; }
-    } else {
-      w.x += w.v * dt / 16;
-      if (w.x < -4) w.v = Math.abs(w.v);
-      if (w.x > 102) w.v = -Math.abs(w.v);
-      if (Math.random() < 0.0025) {
-        w.rest = 1200 + Math.random() * 2200; w.el.classList.add('rest');
-        if (Math.random() < .5) {
-          const b = document.createElement('span');
-          b.className = 'bubble'; b.textContent = SAYS[Math.random() * SAYS.length | 0];
-          w.el.appendChild(b); setTimeout(() => b.remove(), 1800);
-        }
-      }
+  function unlock(){
+    if (!ctx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      ctx = new AC();
+      master = ctx.createGain(); master.gain.value = 0.55; master.connect(ctx.destination);
     }
-    const size = 18 + (w.y - 60) * 0.55;          // 아래쪽(가까운 곳)일수록 크게
-    w.el.style.left = w.x + 'vw'; w.el.style.top = w.y + 'vh';
-    w.el.style.fontSize = size + 'px'; w.el.style.zIndex = Math.round(w.y);
-    w.el.firstChild.style.transform = w.v > 0 ? 'scaleX(-1)' : '';   // 이모지는 왼쪽을 보고 있으니 오른쪽으로 갈 땐 뒤집기
+    if (ctx.state === 'suspended') ctx.resume();
+    return ctx;
   }
-  requestAnimationFrame(walk);
-}
-requestAnimationFrame(walk);
+  function tone(f, t, dur, type = 'triangle', vol = .08, slide = 0){
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type; o.frequency.setValueAtTime(f, t);
+    if (slide) o.frequency.exponentialRampToValueAtTime(f * slide, t + dur);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(vol, t + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(master);
+    o.start(t); o.stop(t + dur + 0.03);
+  }
+  function schedule(){
+    while (nextT < ctx.currentTime + 0.35) {
+      const i = step % MEL.length;
+      if (MEL[i]) tone(hz(MEL[i]), nextT, 0.2, 'triangle', 0.09);
+      if (i % 2 === 0) { const b = BASS[(i / 2) % BASS.length]; if (b) tone(hz(b), nextT, 0.32, 'sine', 0.13); }
+      if (i % 4 === 2) tone(2400, nextT, 0.03, 'square', 0.012);
+      if (BELL[i]) tone(hz(BELL[i]), nextT, 0.6, 'sine', 0.035);
+      nextT += EIGHTH; step++;
+    }
+  }
+  function start(){
+    if (!enabled || timer || !unlock()) return;
+    nextT = ctx.currentTime + 0.1;
+    timer = setInterval(schedule, 60);
+  }
+  function stop(){ clearInterval(timer); timer = null; }
+  function sfx(kind, n = 1){
+    if (!enabled || !unlock()) return;
+    const t = ctx.currentTime;
+    if (kind === 'pop') {
+      const up = Math.pow(2, Math.min(n - 1, 6) * 2 / 12);
+      ['C6','E6','G6','C7'].forEach((m, i) => tone(hz(m) * up, t + i * 0.045, 0.14, 'sine', 0.09));
+    } else if (kind === 'swap') tone(hz('A5'), t, 0.07, 'sine', 0.06, 1.3);
+    else if (kind === 'nope') { tone(hz('E4'), t, 0.12, 'square', 0.03, 0.8); tone(hz('C4'), t + 0.1, 0.16, 'square', 0.03, 0.8); }
+    else if (kind === 'end') ['G5','E5','C5','G4'].forEach((m, i) => tone(hz(m), t + i * 0.16, 0.3, 'triangle', 0.09));
+    else if (kind === 'record') ['C5','E5','G5','C6','E6','G6'].forEach((m, i) => tone(hz(m), t + i * 0.09, 0.3, 'triangle', 0.09));
+  }
+  return { unlock, start, stop, sfx, setEnabled: on => { enabled = on; if (!on) stop(); }, isPlaying: () => !!timer };
+})();
 
-// 시작 화면
-$('card').innerHTML = `<h2>🐾 동물 퍼즐 🐾</h2>
-  <div class="faces">${ANIMALS.map(a => a.e).join('')}</div>
-  <p>이웃한 동물 두 마리를 <b>바꿔서</b><br>같은 동물을 <b>3마리 이상</b> 한 줄로 맞추거나<br><b>2×2 사각형</b>으로 모으세요!</p>
-  <p style="font-size:13px;color:#8a7055">스와이프하거나, 두 동물을 차례로 탭하세요.<br>연쇄 콤보는 점수 배수 · 힌트 -3초 · 🔊 음악 켜기/끄기</p>
-  <button onclick="newGame()">시작</button>`;
-$('overlay').classList.add('show');
+/* =========================================================
+   useGame: 게임 상태와 진행을 담당하는 훅
+   판(grid)은 애니메이션 단계마다 직접 바꾸고 rerender()로 화면을 갱신한다.
+   ========================================================= */
+function useGame(){
+  const gridRef = useRef([]);
+  const [, rerender] = useReducer(x => x + 1, 0);
+  const [phase, setPhase] = useState('intro');          // intro | playing | over
+  const [score, setScore] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(MAX_TIME);
+  const [best, setBest] = useState(() => load('animal-best', 0));
+  const [result, setResult] = useState(null);
+  const [floats, setFloats] = useState([]);
+  const s = useRef({ score: 0, time: MAX_TIME, busy: false, over: true, sel: null, best: load('animal-best', 0) }).current;
+
+  const sync = () => { setScore(s.score); setTimeLeft(s.time); };
+  const addFloat = (c, r, text, color) => {
+    const id = Math.random();
+    setFloats(f => [...f, { id, c, r, text, color }]);
+    setTimeout(() => setFloats(f => f.filter(x => x.id !== id)), 900);
+  };
+
+  const end = useCallback(title => {
+    if (s.over) return;
+    s.over = true;
+    const record = s.score > s.best;
+    if (record) { s.best = s.score; save('animal-best', s.score); setBest(s.score); }
+    Sound.sfx(record ? 'record' : 'end');
+    setResult({ title, score: s.score, record });
+    setPhase('over');
+  }, []);
+
+  const newGame = useCallback(async () => {
+    Object.assign(s, { score: 0, time: MAX_TIME, busy: true, over: false, sel: null });
+    gridRef.current = createBoard();
+    setResult(null); setPhase('playing'); sync(); rerender();
+    await nextFrame();
+    gridRef.current.flat().forEach(p => { p.instant = false; p.y = p.r; });
+    rerender();
+    await sleep(250);
+    s.busy = false;
+  }, []);
+
+  // 타이머
+  useEffect(() => {
+    if (phase !== 'playing') return;
+    const id = setInterval(() => {
+      if (s.over) return;
+      s.time = Math.max(0, s.time - 0.2);
+      setTimeLeft(s.time);
+      if (s.time <= 0 && !s.busy) end('시간 종료!');
+    }, 200);
+    return () => clearInterval(id);
+  }, [phase, end]);
+
+  async function resolve(){
+    const g = gridRef.current;
+    let combo = 1, m;
+    while ((m = findMatches(g)).length) {
+      m.forEach(p => p.pop = true);
+      rerender();
+      Sound.sfx('pop', combo);
+      const gained = m.length * 10 * combo;
+      s.score += gained;
+      s.time = Math.min(MAX_TIME, s.time + m.length * 0.3);
+      sync();
+      const cx = m.reduce((a, p) => a + p.c, 0) / m.length, cy = m.reduce((a, p) => a + p.r, 0) / m.length;
+      addFloat(cx, cy, combo > 1 ? `+${gained} x${combo}` : `+${gained}`);
+      await sleep(250);
+      m.forEach(p => { g[p.r][p.c] = null; });
+      const spawned = applyGravity(g);
+      rerender();
+      await nextFrame();
+      spawned.forEach(p => { p.instant = false; p.y = p.r; });
+      rerender();
+      await sleep(280);
+      combo++;
+    }
+  }
+
+  async function reshuffle(){
+    s.busy = true;
+    addFloat(COLS / 2 - 1.5, ROWS / 2, '섞는 중!', '#5cb338');
+    shuffleBoard(gridRef.current);
+    rerender();
+    await sleep(400);
+    s.busy = false;
+  }
+
+  async function trySwap(a, b){
+    const g = gridRef.current;
+    s.busy = true;
+    g.flat().forEach(p => p.hint = false);
+    Sound.sfx('swap');
+    swapPieces(g, a, b); rerender();
+    await sleep(200);
+    if (!findMatches(g).length) {
+      Sound.sfx('nope');
+      swapPieces(g, a, b); rerender();
+      await sleep(200);
+      s.busy = false;
+      return;
+    }
+    await resolve();
+    s.busy = false;
+    if (s.time <= 0) return end('시간 종료!');
+    if (!findMove(g)) await reshuffle();
+  }
+
+  function clearSel(){ if (s.sel) s.sel.sel = false; s.sel = null; }
+
+  function tap(r, c){
+    if (s.over || s.busy) return;
+    const p = gridRef.current[r]?.[c];
+    if (!p) return;
+    if (!s.sel) { s.sel = p; p.sel = true; }
+    else if (s.sel === p) clearSel();
+    else if (Math.abs(s.sel.r - r) + Math.abs(s.sel.c - c) === 1) { const a = s.sel; clearSel(); trySwap(a, p); return; }
+    else { clearSel(); s.sel = p; p.sel = true; }
+    rerender();
+  }
+
+  function swipe(r, c, dr, dc){
+    if (s.over || s.busy) return;
+    const g = gridRef.current, a = g[r]?.[c], b = g[r + dr]?.[c + dc];
+    clearSel();
+    if (a && b) trySwap(a, b); else rerender();
+  }
+
+  function hint(){
+    if (s.over || s.busy) return;
+    const m = findMove(gridRef.current);
+    if (!m) return;
+    m.forEach(p => p.hint = true);
+    s.time = Math.max(0, s.time - 3);
+    sync(); rerender();
+  }
+
+  return { grid: gridRef.current, phase, score, timeLeft, best, result, floats, newGame, tap, swipe, hint };
+}
+
+/* =========================================================
+   컴포넌트
+   ========================================================= */
+function Village(){
+  const walkerRefs = useRef([]);
+
+  useEffect(() => {
+    const ws = VILLAGE.walkers.map((_, i) => ({
+      el: walkerRefs.current[i],
+      x: Math.random() * 100,
+      y: 60 + Math.random() * 36,
+      v: (0.012 + Math.random() * 0.02) * (Math.random() < .5 ? -1 : 1),
+      rest: 0,
+    }));
+    let last = performance.now(), raf;
+    const loop = now => {
+      const dt = Math.min(50, now - last); last = now;
+      for (const w of ws) {
+        if (!w.el) continue;
+        if (w.rest > 0) {
+          w.rest -= dt;
+          if (w.rest <= 0) { w.el.classList.remove('rest'); if (Math.random() < .4) w.v = -w.v; }
+        } else {
+          w.x += w.v * dt / 16;
+          if (w.x < -4) w.v = Math.abs(w.v);
+          if (w.x > 102) w.v = -Math.abs(w.v);
+          if (Math.random() < 0.0025) {
+            w.rest = 1200 + Math.random() * 2200; w.el.classList.add('rest');
+            if (Math.random() < .5) {
+              const b = document.createElement('span');
+              b.className = 'bubble'; b.textContent = VILLAGE.says[Math.random() * VILLAGE.says.length | 0];
+              w.el.appendChild(b); setTimeout(() => b.remove(), 1800);
+            }
+          }
+        }
+        w.el.style.left = w.x + 'vw'; w.el.style.top = w.y + 'vh';
+        w.el.style.fontSize = (18 + (w.y - 60) * 0.55) + 'px';   // 가까울수록 크게
+        w.el.style.zIndex = Math.round(w.y);
+        w.el.firstChild.style.transform = w.v > 0 ? 'scaleX(-1)' : '';  // 이모지는 왼쪽을 봄 → 오른쪽 이동 시 뒤집기
+      }
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  return (
+    <div className="village">
+      <div className="sun" />
+      <div className="hill h1" />
+      <div className="hill h2" />
+      <div className="ground" />
+      <div className="road" />
+      <div className="pond" />
+      {VILLAGE.clouds.map(([top, size, dur], i) => (
+        <div key={i} className="cloud"
+          style={{ top: top + 'vh', fontSize: size, animationDuration: dur + 's', animationDelay: -(dur * i / 4) + 's' }}>☁️</div>
+      ))}
+      {VILLAGE.props.map(([e, x, y, size, bob], i) => (
+        <div key={i} className="prop" style={{ left: x + 'vw', top: y + 'vh', fontSize: size, zIndex: Math.round(y) }}>
+          {bob ? <span className="bob" style={{ animationDelay: (i % 7) * 0.2 + 's' }}>{e}</span> : e}
+        </div>
+      ))}
+      {VILLAGE.walkers.map((e, i) => (
+        <div key={i} className="walker" ref={el => walkerRefs.current[i] = el}>
+          <span className="body">{e}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Header({ best, score, timeLeft, musicOn, onToggleMusic, onHint, onNewGame }){
+  return (
+    <>
+      <h1><span className="paw">🐾</span> 동물 퍼즐 <span className="paw r">🐾</span></h1>
+      <div className="hud">
+        <div className="best">H {best}</div>
+        <div className="score">{score}</div>
+        <div className="btns">
+          <button className="music" title="음악 켜기/끄기" onClick={onToggleMusic}>{musicOn ? '🔊' : '🔇'}</button>
+          <button onClick={onHint}>힌트</button>
+          <button onClick={onNewGame}>새 게임</button>
+        </div>
+      </div>
+      <div className="timebar"><div className="timefill" style={{ width: (timeLeft / MAX_TIME * 100) + '%' }} /></div>
+    </>
+  );
+}
+
+function Piece({ p }){
+  const cls = 'g' + (p.sel ? ' sel' : '') + (p.hint ? ' hint' : '') + (p.pop ? ' pop' : '');
+  return (
+    <div className={cls} style={{
+      transform: `translate(calc(var(--cell) * ${p.c}), calc(var(--cell) * ${p.y}))`,
+      transition: p.instant ? 'none' : undefined,
+    }}>
+      <div className="face" style={{ background: ANIMALS[p.t].bg }}>{ANIMALS[p.t].e}</div>
+    </div>
+  );
+}
+
+function Board({ grid, floats, onTap, onSwipe }){
+  const boardRef = useRef(null);
+  const down = useRef(null);
+  const handlers = useRef({});
+  handlers.current = { onTap, onSwipe };
+
+  useEffect(() => {
+    const move = e => {
+      const d = down.current;
+      if (!d) return;
+      const dx = e.clientX - d.x, dy = e.clientY - d.y;
+      if (Math.max(Math.abs(dx), Math.abs(dy)) < d.size * 0.4) return;
+      down.current = null;
+      const [dr, dc] = Math.abs(dx) > Math.abs(dy) ? [0, Math.sign(dx)] : [Math.sign(dy), 0];
+      handlers.current.onSwipe(d.r, d.c, dr, dc);
+    };
+    const up = () => {
+      const d = down.current;
+      if (!d) return;
+      down.current = null;
+      handlers.current.onTap(d.r, d.c);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    return () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
+  }, []);
+
+  const onPointerDown = e => {
+    const rect = boardRef.current.getBoundingClientRect();
+    const size = rect.width / COLS;
+    const c = Math.floor((e.clientX - rect.left) / size), r = Math.floor((e.clientY - rect.top) / size);
+    if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return;
+    down.current = { r, c, x: e.clientX, y: e.clientY, size };
+  };
+
+  return (
+    <div className="wrap">
+      <div className="board" ref={boardRef} onPointerDown={onPointerDown}>
+        {grid.flat().filter(Boolean).map(p => <Piece key={p.id} p={p} />)}
+      </div>
+      {floats.map(f => (
+        <div key={f.id} className="float"
+          style={{ left: `calc(var(--cell) * ${f.c} + 10px)`, top: `calc(var(--cell) * ${f.r} + 6px)`, color: f.color }}>
+          {f.text}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Overlay({ phase, result, onStart }){
+  if (phase === 'playing') return null;
+  return (
+    <div className="overlay">
+      <div className="card">
+        {phase === 'intro' ? (
+          <>
+            <h2>🐾 동물 퍼즐 🐾</h2>
+            <div className="faces">{ANIMALS.map(a => a.e).join('')}</div>
+            <p>이웃한 동물 두 마리를 <b>바꿔서</b><br />같은 동물을 <b>3마리 이상</b> 한 줄로 맞추거나<br /><b>2×2 사각형</b>으로 모으세요!</p>
+            <p className="small">스와이프하거나, 두 동물을 차례로 탭하세요.<br />연쇄 콤보는 점수 배수 · 힌트 -3초 · 🔊 음악 켜기/끄기</p>
+            <button onClick={onStart}>시작</button>
+          </>
+        ) : (
+          <>
+            <h2>{result.title}</h2>
+            <p>점수 <b style={{ color: 'var(--accent)', fontSize: 24 }}>{result.score}</b>
+              {result.record && <><br />🏆 최고 기록!</>}</p>
+            <button onClick={onStart}>다시 하기</button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function App(){
+  const game = useGame();
+  const [musicOn, setMusicOn] = useState(() => load('animal-music', true));
+
+  // 음악 on/off 및 게임 시작 이후 배경음악 재생
+  useEffect(() => {
+    save('animal-music', musicOn);
+    Sound.setEnabled(musicOn);
+    if (musicOn && game.phase !== 'intro') Sound.start(); else Sound.stop();
+  }, [musicOn, game.phase]);
+
+  // 다른 탭으로 가면 음악 멈춤
+  useEffect(() => {
+    const onVis = () => {
+      if (document.hidden) Sound.stop();
+      else if (musicOn && game.phase !== 'intro') Sound.start();
+    };
+    document.addEventListener('visibilitychange', onVis);
+    return () => document.removeEventListener('visibilitychange', onVis);
+  }, [musicOn, game.phase]);
+
+  const start = () => { Sound.unlock(); game.newGame(); };   // 클릭 순간에 오디오 잠금 해제
+
+  return (
+    <>
+      <Village />
+      <div className="app">
+        <Header best={game.best} score={game.score} timeLeft={game.timeLeft} musicOn={musicOn}
+          onToggleMusic={() => { Sound.unlock(); setMusicOn(m => !m); }}
+          onHint={game.hint} onNewGame={start} />
+        <Board grid={game.grid} floats={game.floats} onTap={game.tap} onSwipe={game.swipe} />
+      </div>
+      <Overlay phase={game.phase} result={game.result} onStart={start} />
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
 </script>
 </body>
 </html>
